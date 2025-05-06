@@ -1,8 +1,7 @@
 # bot.py
-import os, json, asyncio, logging, yt_dlp, threading
+import os, asyncio, logging, yt_dlp, threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from telethon import TelegramClient, events, Button, errors
-import os
 import json
 
 if not os.path.exists("users.json"):
