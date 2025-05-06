@@ -9,7 +9,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy bot code
 COPY bot.py .
-COPY users.json .  # if existing, else an empty list []
 
 # Expose port for health checks (Koyeb uses $PORT)
 EXPOSE 8080
