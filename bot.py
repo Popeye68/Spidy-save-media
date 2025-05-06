@@ -2,7 +2,13 @@
 import os, json, asyncio, logging, yt_dlp, threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from telethon import TelegramClient, events, Button, errors
+import os
+import json
 
+if not os.path.exists("users.json"):
+    with open("users.json", "w") as f:
+        json.dump([], f)
+        
 # Enable logging for debugging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
