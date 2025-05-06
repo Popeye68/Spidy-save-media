@@ -173,7 +173,8 @@ try {
   await bot.sendMessage(chatId, 'Failed to fetch video info with yt-dlp.');
   return;
 }
-    }
+    
+    
     lastQuery[chatId] = { type: 'youtube', data: result };
     // Offer format choices
     const buttons = [
