@@ -144,12 +144,35 @@ bot.on('message', async (msg) => {
     // Call a free external YouTube API (placeholder) to get download links&#8203;:contentReference[oaicite:9]{index=9}
     let result;
     try {
-      const apiUrl = `https://api.savetube.me/info?url=${encodeURIComponent(link)}`;
-      const resp = await axios.get(apiUrl);
-      result = resp.data; // expecting { videoLinks: {'720p': url, '360p': url}, audioLink: url }
-    } catch (err) {
-      await bot.sendMessage(chatId, 'Failed to fetch video info.');
-      return;
+      const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
+
+try {
+  const { stdout } = await execPromise(`yt-dlp -j "${link}"`);
+  const ytInfo = JSON.parse(stdout);
+
+  const videoLinks = {};
+  let audioLink = null;
+
+  for (let format of ytInfo.formats) {
+    if (format.format_id.includes('18') && format.ext === 'mp4') {
+      videoLinks['360p'] = format.url;
+    }
+    if (format.format_id.includes('22') && format.ext === 'mp4') {
+      videoLinks['720p'] = format.url;
+    }
+    if (!audioLink && format.vcodec === 'none') {
+      audioLink = format.url;
+    }
+  }
+
+  result = { videoLinks, audioLink };
+} catch (err) {
+  console.error('yt-dlp error:', err);
+  await bot.sendMessage(chatId, 'Failed to fetch video info with yt-dlp.');
+  return;
+}
     }
     lastQuery[chatId] = { type: 'youtube', data: result };
     // Offer format choices
