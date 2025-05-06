@@ -130,25 +130,31 @@ async def youtube_handler(event):
 @client.on(events.NewMessage(func=lambda e: e.is_private and 'instagram.com' in (e.message.text or '')))
 @require_join
 async def instagram_handler(event):
-    text = event.message.text.strip()
-    url = text.split()[0]
-    await event.reply("Downloading Instagram content... 📥")
-    try:
-        ydl_opts = {'outtmpl': 'insta_%(id)s.%(ext)s', 'quiet': True}
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-        file_path = ydl.prepare_filename(info)
-        # Send the file
-        caption = "🎉 Here is your Instagram media!"
-        await client.send_file(
-            event.chat_id, file_path,
-            caption=caption,
-            buttons=Button.inline("Join Channel ✅", data="noop")  # Data 'noop' does nothing
-        )
-        os.remove(file_path)
-    except Exception as e:
-        logger.error(f"Failed to download Instagram URL {url}: {e}")
-        await event.reply("This account is private or content is not accessible.")
+    text = event.message.text.strip()
+    url = text.split()[0]
+    await event.reply("Downloading Instagram content... 📥")
+    try:
+        ydl_opts = {
+            'outtmpl': 'insta_%(id)s.%(ext)s',
+            'quiet': True,
+            'noplaylist': True,
+            'skip_download': False,
+            'cookiesfrombrowser': ('chrome',),  # OPTIONAL: use browser cookies if needed
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+        file_path = ydl.prepare_filename(info)
+
+        await client.send_file(
+            event.chat_id, file_path,
+            caption="🎉 Here is your Instagram media!",
+            buttons=Button.inline("Join Channel ✅", data="noop")
+        )
+        os.remove(file_path)
+    except Exception as e:
+        logger.error(f"Instagram download failed: {e}")
+        await event.reply("❌ Failed to download. The content may be private or restricted.")
+
 
 # CallbackQuery handler (for inline buttons)
 @client.on(events.CallbackQuery)
@@ -178,53 +184,63 @@ async def callback_handler(event):
     data = event.data.decode('utf-8')
     parts = data.split("|")
 
-    # YouTube: Video or Audio selection
+    # YouTube: Video vs. Audio selection
     if parts[0] in ("yt_video", "yt_audio"):
-        mode, url = parts
+        mode = parts[0]
+        # Retrieve the URL from lastQuery
+        url = lastQuery.get(event.chat_id, {}).get('url')
+        if not url:
+            return await event.answer()  # nothing to do
 
         if mode == "yt_video":
-            # Prompt user for quality
+            # Prompt user for quality choices
             qualities = ["360p", "720p", "1080p"]
             buttons = [
-                [Button.inline(q, data=f"yt_quality|{url}|{q}") for q in qualities]
+                [Button.inline(q, data=f"yt_quality|{q}") for q in qualities]
             ]
             await event.reply("Select video quality:", buttons=buttons)
-            await event.answer()   # stop the loading spinner
+            await event.answer()   # stop the spinner
             return
 
-        else:  # mode == "yt_audio"
-            # Audio download directly
-            await event.reply("Downloading audio... 🎧")
-            try:
-                ydl_opts = {
-                    'format': 'bestaudio/best',
-                    'outtmpl': 'audio.%(ext)s',
-                    'quiet': True
-                }
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    info = ydl.extract_info(url, download=True)
-                file_path = ydl.prepare_filename(info)
+        # mode == "yt_audio"
+        await event.reply("Downloading audio... 🎧")
+        file_path = None
+        try:
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': 'audio.%(ext)s',
+                'quiet': True
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+            file_path = ydl.prepare_filename(info)
 
-                await client.send_file(
-                    event.chat_id,
-                    file_path,
-                    caption="🎵 Here is your audio!",
-                    buttons=Button.inline("Join Channel ✅", data="noop")
-                )
-            except Exception as e:
-                logger.error(f"YT audio download failed: {e}")
-                await event.reply("❌ Failed to download audio.")
-            finally:
-                if 'file_path' in locals() and os.path.exists(file_path):
-                    os.remove(file_path)
+            await client.send_file(
+                event.chat_id,
+                file_path,
+                caption="🎵 Here is your audio!",
+                buttons=Button.inline("Join Channel ✅", data="noop")
+            )
+        except Exception as e:
+            logger.error(f"YT audio download failed: {e}")
+            await event.reply("❌ Failed to download audio.")
+        finally:
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
 
-            await event.answer()  # stop loading
-            return
+        await event.answer()   # stop the spinner
+        return
 
     # YouTube: Quality selection for video download
     if parts[0] == "yt_quality":
-        _, url, quality = parts
+        quality = parts[1]  # e.g. "360p"
+        # Retrieve the URL from lastQuery
+        url = lastQuery.get(event.chat_id, {}).get('url')
+        if not url:
+            return await event.answer()
+
         await event.reply(f"Downloading video at {quality}... 🎬")
+        file_path = None
         try:
             height = int(quality.rstrip('p'))
             ydl_opts = {
@@ -246,14 +262,15 @@ async def callback_handler(event):
             logger.error(f"YT video download failed: {e}")
             await event.reply("❌ Failed to download video.")
         finally:
-            if 'file_path' in locals() and os.path.exists(file_path):
+            if file_path and os.path.exists(file_path):
                 os.remove(file_path)
 
         await event.answer()
         return
 
-    # No-op callback (e.g., join button)
+    # Catch-all: stop spinner on other callbacks
     await event.answer()
+
 
 
 # Admin broadcast command
