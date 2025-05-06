@@ -173,15 +173,26 @@ async def callback_handler(event):
 
     # Handle YouTube callback formats
     # Data format: "yt_video|<url>" or "yt_audio|<url>" or "yt_quality|<url>|<format>"
+    @client.on(events.CallbackQuery)
+async def callback_handler(event):
+    data = event.data.decode('utf-8')
     parts = data.split("|")
+
+    # YouTube: Video or Audio selection
     if parts[0] in ("yt_video", "yt_audio"):
         mode, url = parts
+
         if mode == "yt_video":
-            # Ask for quality selection
+            # Prompt user for quality
             qualities = ["360p", "720p", "1080p"]
-            buttons = [[Button.inline(q, data=f"yt_quality|{url}|{q}")] for q in qualities]
+            buttons = [
+                [Button.inline(q, data=f"yt_quality|{url}|{q}") for q in qualities]
+            ]
             await event.reply("Select video quality:", buttons=buttons)
-        else:
+            await event.answer()   # stop the loading spinner
+            return
+
+        else:  # mode == "yt_audio"
             # Audio download directly
             await event.reply("Downloading audio... 🎧")
             try:
@@ -193,24 +204,28 @@ async def callback_handler(event):
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     info = ydl.extract_info(url, download=True)
                 file_path = ydl.prepare_filename(info)
+
                 await client.send_file(
-                    event.chat_id, file_path,
+                    event.chat_id,
+                    file_path,
                     caption="🎵 Here is your audio!",
                     buttons=Button.inline("Join Channel ✅", data="noop")
                 )
-                os.remove(file_path)
             except Exception as e:
                 logger.error(f"YT audio download failed: {e}")
-                await event.reply("Failed to download audio.")
-        await event.answer()  # stop loading
-        return
+                await event.reply("❌ Failed to download audio.")
+            finally:
+                if 'file_path' in locals() and os.path.exists(file_path):
+                    os.remove(file_path)
 
-    # Handle quality selection for video
+            await event.answer()  # stop loading
+            return
+
+    # YouTube: Quality selection for video download
     if parts[0] == "yt_quality":
         _, url, quality = parts
         await event.reply(f"Downloading video at {quality}... 🎬")
         try:
-            # Set format filter for height <= quality
             height = int(quality.rstrip('p'))
             ydl_opts = {
                 'format': f'bestvideo[height<={height}]+bestaudio/best',
@@ -220,20 +235,26 @@ async def callback_handler(event):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
             file_path = ydl.prepare_filename(info)
+
             await client.send_file(
-                event.chat_id, file_path,
+                event.chat_id,
+                file_path,
                 caption=f"🎥 Video downloaded ({quality})!",
                 buttons=Button.inline("Join Channel ✅", data="noop")
             )
-            os.remove(file_path)
         except Exception as e:
             logger.error(f"YT video download failed: {e}")
-            await event.reply("Failed to download video.")
+            await event.reply("❌ Failed to download video.")
+        finally:
+            if 'file_path' in locals() and os.path.exists(file_path):
+                os.remove(file_path)
+
         await event.answer()
         return
 
-    # Admin broadcast (ignore in callback context)
+    # No-op callback (e.g., join button)
     await event.answer()
+
 
 # Admin broadcast command
 @client.on(events.NewMessage(pattern=r'^/broadcast(?:\s+(.+))?$'))
