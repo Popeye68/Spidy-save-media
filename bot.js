@@ -144,7 +144,7 @@ bot.on('message', async (msg) => {
     // Call a free external YouTube API (placeholder) to get download links&#8203;:contentReference[oaicite:9]{index=9}
     let result;
     try {
-      const apiUrl = `https://api.example.com/youtube?url=${encodeURIComponent(link)}`;
+      const apiUrl = `https://api.savetube.me/info?url=${encodeURIComponent(link)}`;
       const resp = await axios.get(apiUrl);
       result = resp.data; // expecting { videoLinks: {'720p': url, '360p': url}, audioLink: url }
     } catch (err) {
@@ -172,7 +172,7 @@ bot.on('message', async (msg) => {
     // Call a free external Instagram API (placeholder) to get download links&#8203;:contentReference[oaicite:10]{index=10}
     let result;
     try {
-      const apiUrl = `https://api.example.com/instagram?url=${encodeURIComponent(link)}`;
+      const apiUrl = `https://api.instagramdownloader.io/v1/?url=${encodeURIComponent(link)}`;
       const resp = await axios.get(apiUrl);
       result = resp.data; // expecting { videoUrl: ..., audioUrl: ... }
     } catch (err) {
