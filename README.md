@@ -1,11 +1,14 @@
+<h1 align="center">
+  <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=40&pause=1000&color=FF0000&center=true&vCenter=true&multiline=true&width=435&height=100&lines=S+P+I+D+Y" alt="SPIDY"/>
+</h1>
+
 
 # Spidy-save-media
 
 [![Telegram Channel](https://img.shields.io/badge/Telegram-Join%20Channel-blue?logo=telegram)](https://t.me/spidy_universe)  
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&name=SpidySaveMediaBot&repository=github.com/Popeye68/Spidy-save-media&branch=main&service_type=web&ports=3000%3Bhttp%3B%2F)  
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Spidy** is an advanced Telegram bot for downloading YouTube and Instagram media, offering format/quality options, admin broadcasting, and force-join support — all wrapped in a beginner-friendly deployment system!
+**Spidy**-**Save**-**Media** is an advanced Telegram bot for downloading YouTube and Instagram media, offering format/quality options, admin broadcasting, and force-join support — all wrapped in a beginner-friendly deployment system!
 
 ---
 
