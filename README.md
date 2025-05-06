@@ -36,12 +36,12 @@ TELEGRAM_SESSION=your_long_session_string_here
 
 - **BOT_TOKEN**: Talk to [@BotFather](https://t.me/BotFather) and create a bot using `/newbot`.
 - **API_ID & API_HASH**: Get from [https://my.telegram.org/apps](https://my.telegram.org/apps).
-- **ADMIN_ID**: Use [@userinfobot](https://t.me/userinfobot) to get your Telegram numeric ID.
+- **ADMIN_ID**: Use [@Get_chatid_infobot](https://t.me/Get_chatid_infobot) to get your Telegram numeric ID.
 - **CHANNEL_USERNAME**: Use the channel's `@username`, like `@spidy_universe`.
 - **TELEGRAM_SESSION**: Run the Python script below to generate:
 
 ```bash
-python3 - <<'PYCODE'
+python3 -c "
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
 
@@ -51,7 +51,8 @@ api_hash = input('API HASH: ')
 with TelegramClient(StringSession(), api_id, api_hash) as client:
     print('Here is your session string:')
     print(client.session.save())
-PYCODE
+"
+
 ```
 
 ---
