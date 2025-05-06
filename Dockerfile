@@ -1,27 +1,18 @@
 # Use official Node.js image
-FROM node:20-bullseye
+# Dockerfile
+FROM python:3.10-slim
 
-# Install dependencies for yt-dlp
-RUN apt update && apt install -y \
-    python3 \
-    python3-pip \
-    ffmpeg \
-    curl \
-    && pip3 install --no-cache-dir yt-dlp \
-    && apt clean
-
-# Set working directory
+# Install dependencies
 WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy package files and install Node.js dependencies
-COPY package*.json ./
-RUN npm install
+# Copy bot code
+COPY bot.py .
+COPY users.json .  # if existing, else an empty list []
 
-# Copy the rest of the project
-COPY . .
+# Expose port for health checks (Koyeb uses $PORT)
+EXPOSE 8080
 
-# Expose port for Koyeb
-EXPOSE 3000
-
-# Start the bot
-CMD ["node", "bot.js"]
+# Run the bot
+CMD ["python", "bot.py"]
