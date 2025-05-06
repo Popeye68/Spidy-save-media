@@ -41,6 +41,10 @@ TELEGRAM_SESSION=your_long_session_string_here
 - **TELEGRAM_SESSION**: Run the Python script below to generate:
 
 ```bash
+pip install telethon
+```
+
+```bash
 python3 -c "
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
