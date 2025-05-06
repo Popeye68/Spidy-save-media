@@ -140,43 +140,34 @@ bot.on('message', async (msg) => {
 
   // YouTube link handling
   if (text.match(/youtu\.be|youtube\.com/)) {
-    const link = text.trim();
-    // Call a free external YouTube API (placeholder) to get download links&#8203;:contentReference[oaicite:9]{index=9}
-    let result;
-    try {
-      const { exec } = require('child_process');
-const util = require('util');
-const execPromise = util.promisify(exec);
+  const link = text.trim();
+  const { exec } = require('child_process');
+  const util = require('util');
+  const execPromise = util.promisify(exec);
 
-try {
-  const { stdout } = await execPromise(`yt-dlp -j "${link}"`);
-  const ytInfo = JSON.parse(stdout);
+  let result;
+  try {
+    const { stdout } = await execPromise(`yt-dlp -j "${link}"`);
+    const ytInfo = JSON.parse(stdout);
 
-  const videoLinks = {};
-  let audioLink = null;
+    const videoLinks = {};
+    let audioLink = null;
 
-  for (let format of ytInfo.formats) {
-    if (format.format_id.includes('18') && format.ext === 'mp4') {
-      videoLinks['360p'] = format.url;
+    for (let format of ytInfo.formats) {
+      if (format.format_id.includes('18') && format.ext === 'mp4') {
+        videoLinks['360p'] = format.url;
+      }
+      if (format.format_id.includes('22') && format.ext === 'mp4') {
+        videoLinks['720p'] = format.url;
+      }
+      if (!audioLink && format.vcodec === 'none') {
+        audioLink = format.url;
+      }
     }
-    if (format.format_id.includes('22') && format.ext === 'mp4') {
-      videoLinks['720p'] = format.url;
-    }
-    if (!audioLink && format.vcodec === 'none') {
-      audioLink = format.url;
-    }
-  }
 
-  result = { videoLinks, audioLink };
-} catch (err) {
-  console.error('yt-dlp error:', err);
-  await bot.sendMessage(chatId, 'Failed to fetch video info with yt-dlp.');
-  return;
-}
-    
-    
+    result = { videoLinks, audioLink };
     lastQuery[chatId] = { type: 'youtube', data: result };
-    // Offer format choices
+
     const buttons = [
       [
         { text: 'Video 720p', callback_data: 'yt_video_720' },
@@ -186,9 +177,19 @@ try {
         { text: 'Audio (MP3)', callback_data: 'yt_audio' }
       ]
     ];
-    await bot.sendMessage(chatId, 'Select format:', { reply_markup: { inline_keyboard: buttons } });
-    return;
+
+    await bot.sendMessage(chatId, 'Select format:', {
+      reply_markup: { inline_keyboard: buttons }
+    });
+
+  } catch (err) {
+    console.error('yt-dlp error:', err);
+    await bot.sendMessage(chatId, 'Failed to fetch video info with yt-dlp.');
   }
+
+  return;
+}
+
 
   // Instagram link handling
   if (text.match(/instagram\.com/)) {
